@@ -59,7 +59,7 @@
 
     </platform>
 
-    <!-- ЦВЕТА ТОЛЬКО В ФОРМАТЕ #RRGGBB или #AARRGGBB -->
+    <!-- Цвета ТОЛЬКО в формате #RRGGBB / #AARRGGBB -->
     <preference name="DisallowOverscroll" value="true" />
     <preference name="BackgroundColor" value="#ff000000" />
     <preference name="StatusBarOverlaysWebView" value="true" />
