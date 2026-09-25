@@ -38,23 +38,27 @@ jobs:
       env:
         ANDROID_HOME: /usr/local/lib/android/sdk
 
-    - name: Show generated AndroidManifest (sanity check)
+    # ГЛАВНЫЙ ШАГ: принудительно ставим versionCode 5 в build.gradle
+    - name: Force versionCode=5 in build.gradle
       run: |
-        echo "=== AndroidManifest.xml (первые 15 строк) ==="
-        head -n 15 cordova_app/platforms/android/app/src/main/AndroidManifest.xml || true
+        BUILD_GRADLE="cordova_app/platforms/android/app/build.gradle"
+        echo "=== build.gradle ДО правки ==="
+        grep -n "versionCode" "$BUILD_GRADLE" || true
+        sed -i 's/versionCode .*/versionCode 5/' "$BUILD_GRADLE"
+        echo "=== build.gradle ПОСЛЕ правки ==="
+        grep -n "versionCode" "$BUILD_GRADLE"
 
-    - name: Sanitize colors.xml (fix 0x... -> #...)
+    - name: Fix colors.xml (0x... -> #...)
       run: |
         COLORS_FILE="cordova_app/platforms/android/app/src/main/res/values/colors.xml"
         if [ -f "$COLORS_FILE" ]; then
-          echo "=== colors.xml ДО правки ==="
+          echo "=== colors.xml ДО ==="
           cat "$COLORS_FILE"
-          # Заменить 0xXXXXXXXX на #XXXXXXXX
           sed -i -E 's/(<color[^>]*>)0x([0-9a-fA-F]+)(<\/color>)/\1#\2\3/g' "$COLORS_FILE"
-          echo "=== colors.xml ПОСЛЕ правки ==="
+          echo "=== colors.xml ПОСЛЕ ==="
           cat "$COLORS_FILE"
         else
-          echo "colors.xml не найден — Cordova его не генерировал, всё чисто."
+          echo "colors.xml не найден — ок."
         fi
 
     - name: Build Android Release APK
@@ -84,7 +88,7 @@ jobs:
           --v2-signing-enabled true --v3-signing-enabled true \
           --out ./MayUmshka_Chapter1_V5.apk ./aligned.apk
 
-    - name: Verify Final APK (versionCode + icons + signatures)
+    - name: Verify Final APK
       run: |
         AAPT=$(find $ANDROID_HOME/build-tools -name aapt | sort -V | tail -1)
         APKSIGNER=$(find $ANDROID_HOME/build-tools -name apksigner | sort -V | tail -1)
@@ -93,11 +97,11 @@ jobs:
         $AAPT dump badging MayUmshka_Chapter1_V5.apk | grep -E "^package"
 
         echo ""
-        echo "=== Иконки внутри APK ==="
+        echo "=== Иконки ==="
         $AAPT dump badging MayUmshka_Chapter1_V5.apk | grep -i "application-icon"
 
         echo ""
-        echo "=== Проверка подписи ==="
+        echo "=== Подпись ==="
         $APKSIGNER verify --verbose MayUmshka_Chapter1_V5.apk
 
     - name: Upload Finished Signed APK
